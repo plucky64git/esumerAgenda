@@ -1,0 +1,133 @@
+.barra-superior {
+    background: #0d2240;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+}
+
+.barra-izq,
+.barra-der,
+.barra-menu {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.barra-nombre {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.barra-rol {
+    background: #28a745;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+/* Conectados */
+.barra-conectados {
+    position: relative;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.barra-conectados .lista-conectados {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 220px;
+    margin: 0;
+    padding: 8px 0;
+    list-style: none;
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    cursor: default;
+}
+
+.barra-conectados .lista-conectados li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.barra-conectados .punto-verde {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+    flex-shrink: 0;
+}
+
+/* Menú del admin */
+.barra-menu-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.barra-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.barra-menu-btn.activo {
+    background: #1a3a6e;
+    box-shadow: inset 0 -2px 0 #6ea8ff;
+}
+
+/* Botones de la derecha */
+.barra-btn {
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.barra-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.barra-btn-pdf {
+    background: #dc3545;
+}
+
+.barra-btn-pdf:hover {
+    background: #c82333;
+}
+
+.barra-btn-salir {
+    background: #dc3545;
+}
+
+.barra-btn-salir:hover {
+    background: #c82333;
+}
+
+@media (max-width: 700px) {
+    .barra-superior {
+        justify-content: center;
+    }
+}
