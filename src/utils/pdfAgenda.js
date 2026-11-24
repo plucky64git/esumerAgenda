@@ -22,8 +22,11 @@ const horaAMin = h => {
     return hh * 60 + parseInt(m[2]);
 };
 
+const esJornada = h => (h || '').trim().toUpperCase() === 'DURANTE LA JORNADA';
+
 const horaTexto = h => {
     if (!h) return '';
+    if (esJornada(h)) return 'Durante la jornada';
     if (/AM|PM/i.test(h)) return h;
     const [hh, mm] = h.split(':');
     let n = parseInt(hh);
@@ -199,7 +202,12 @@ export async function generarPdfAgenda(agenda) {
         const f = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
         const acts = (agenda.diasData?.[f] || [])
             .filter(a => a.horaEntrada || a.proposito)
-            .sort((a, b) => horaAMin(a.horaEntrada) - horaAMin(b.horaEntrada));
+            .sort((a, b) => {
+                // "Durante la jornada" va de primero
+                const ja = esJornada(a.horaEntrada), jb = esJornada(b.horaEntrada);
+                if (ja !== jb) return ja ? -1 : 1;
+                return horaAMin(a.horaEntrada) - horaAMin(b.horaEntrada);
+            });
 
         if (acts.length) {
             const dia = new Date(cur);
@@ -211,9 +219,14 @@ export async function generarPdfAgenda(agenda) {
             y = barraDia(doc, dia, ancho, margen, y, false);
 
             acts.forEach((act, idx) => {
-                const valores = [horaTexto(act.horaEntrada), horaTexto(act.horaSalida), act.proposito, act.espacio, act.lider, act.observaciones];
+                // "Durante la jornada" ocupa las dos columnas de hora en una sola celda
+                const jornada = esJornada(act.horaEntrada);
+                const cols = jornada ? [COLS[0] + COLS[1], ...COLS.slice(2)] : COLS;
+                const valores = jornada
+                    ? ['DURANTE LA JORNADA', act.proposito, act.espacio, act.lider, act.observaciones]
+                    : [horaTexto(act.horaEntrada), horaTexto(act.horaSalida), act.proposito, act.espacio, act.lider, act.observaciones];
                 doc.setFontSize(8);
-                const lineas = valores.map((v, i) => doc.splitTextToSize(v || '', COLS[i] - 4));
+                const lineas = valores.map((v, i) => doc.splitTextToSize(v || '', cols[i] - 4));
                 const altFila = Math.max(10, Math.max(...lineas.map(l => l.length)) * 4 + 4);
 
                 if (y + altFila > limite) {
@@ -227,13 +240,13 @@ export async function generarPdfAgenda(agenda) {
                 let x = margen;
                 doc.setDrawColor(180, 180, 180);
                 doc.setFillColor(...(idx % 2 === 0 ? [248, 249, 250] : [255, 255, 255]));
-                COLS.forEach(w => { doc.rect(x, y, w, altFila, 'FD'); x += w; });
+                cols.forEach(w => { doc.rect(x, y, w, altFila, 'FD'); x += w; });
 
                 doc.setTextColor(0, 0, 0);
                 x = margen;
                 lineas.forEach((ls, i) => {
                     ls.forEach((l, li) => doc.text(l, x + 2, y + 5 + li * 4));
-                    x += COLS[i];
+                    x += cols[i];
                 });
                 y += altFila;
             });

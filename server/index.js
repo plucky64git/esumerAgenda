@@ -124,6 +124,9 @@ app.get('/api/cargar', (req, res) => {
 
     actividades.sort((a, b) => {
         if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+        // "Durante la jornada" va de primero en el día
+        const ja = esJornada(a.hora_entrada), jb = esJornada(b.hora_entrada);
+        if (ja !== jb) return ja ? -1 : 1;
         return horaAMinutos(a.hora_entrada) - horaAMinutos(b.hora_entrada);
     });
 
@@ -445,6 +448,12 @@ app.get('/api/lideres', (req, res) => {
 });
 
 // Helper
+// Actividad sin hora fija: se guarda "DURANTE LA JORNADA" en hora_entrada.
+// No bloquea espacios (horaAMinutos devuelve 9999 y el control de cruces la ignora).
+function esJornada(horaStr) {
+    return (horaStr || '').trim().toUpperCase() === 'DURANTE LA JORNADA';
+}
+
 function horaAMinutos(horaStr) {
     if (!horaStr) return 9999;
     const match = horaStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);

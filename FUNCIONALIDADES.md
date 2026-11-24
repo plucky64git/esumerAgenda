@@ -25,7 +25,7 @@ Pantalla "Agenda Semanal — Institución Educativa Jesús Rey" con la marca "By
 
 ## 2. Barra superior — `src/components/BarraSuperior.jsx`
 
-La misma barra en la pantalla de actividades y en el panel del admin.
+La misma barra en la pantalla de actividades y en el panel del admin. **Queda fija arriba** aunque se baje en la página. Lleva "By Poncho 2026" sobre el nombre del usuario.
 
 | Zona | Docente | Admin |
 |---|---|---|
@@ -34,6 +34,7 @@ La misma barra en la pantalla de actividades y en el panel del admin.
 | Derecha | **Salir** | **🔒 Cerrar y descargar PDF** (solo en Actividades con la agenda abierta) · **Salir** |
 
 - **👥 N conectados ▼**: quiénes están viendo la agenda ahora (se actualiza cada 10 s; alguien deja de contar 20 s después de salir). Al pulsarlo se despliega la lista de nombres (el propio aparece como "(yo)").
+- **Cierre por inactividad (30 min)**: si el usuario no hace nada en la página (mouse, teclado, desplazamiento) durante 28 min, sale el aviso **"⏰ ¿Sigues ahí?"** con cuenta regresiva y botón **Seguir aquí**. A los 30 min se cierra la sesión (también en el servidor), sale un mensaje y vuelve al login. La actualización automática cada 10 s no cuenta como actividad. Se mide en cada PC/pestaña por separado.
 
 ---
 
@@ -46,12 +47,13 @@ La misma barra en la pantalla de actividades y en el panel del admin.
 - Una pestaña por cada día entre la fecha de inicio y la final (normalmente lunes a viernes).
 
 ### Tabla de actividades
-Columnas: **Entrada · Salida · Propósito · Espacio · Líder · Observaciones · Creador · ✕**
+Columnas: **Jornada ☐ · Entrada · Salida · PROPÓSITO PEDAGÓGICO - ADMINISTRATIVO · ESPACIO - LUGAR · LIDER DEL ENCUENTRO · OBSERVACIONES · Creador · ✕** (mismos títulos de la agenda en papel)
 
 - **+ Agregar actividad** crea una fila nueva.
 - **Horas**: con un **reloj visual** (hora, luego minutos de 5 en 5, AM/PM).
   - La **salida debe ser después de la entrada**. Si no, las horas se ponen en rojo con *"La salida debe ser después de la entrada"* y la fila **no se guarda** (el servidor también lo valida).
-- **Espacio**: lista desplegable (tabla `espacios`).
+- **☐ Durante la jornada**: casilla en la columna **Jornada**, a la izquierda de la hora de entrada, **siempre desmarcada** salvo que el usuario la marque. Al marcarla, Entrada y Salida se reemplazan por **DURANTE LA JORNADA** (sin reloj); al desmarcarla vuelven las horas vacías. Se guarda en el mismo campo de la hora (la BD no cambia). Estas actividades **van de primeras** en el día y **no bloquean espacios** (suelen usar varios lugares; se escriben en ESPACIO - LUGAR, ej. "Aulas, Patio Central"). En el PDF salen como "DURANTE LA JORNADA" ocupando las dos columnas de hora.
+- **Espacio**: **texto libre** con sugerencias de la tabla `espacios`. Si lo escrito coincide con un espacio de la lista (sin importar mayúsculas, tildes o espacios de más, ej. "auditorio"), se guarda con el nombre exacto ("Auditorio") para que el control de cruces funcione.
 - **Líder**: **texto libre** con sugerencias de la tabla `lideres`.
 - **Creador**: "Yo" en las propias, o el nombre de quien la creó.
 - **Permisos**: cada usuario solo edita y elimina **sus propias** actividades; las de otros se ven en gris.
@@ -167,6 +169,11 @@ Todo se guarda en un solo archivo SQLite:
 
 ---
 
+## 9. Próximo paso
+- **2026-11-24 — Prueba piloto completa** (lista de pasos en [ESTADO_PROYECTO.md](ESTADO_PROYECTO.md#estado-actual-2026-11-23)). Los cambios que salgan de la prueba se anotan aquí.
+
+---
+
 ## Historial de cambios (2026-11-23)
 - Eliminar usuario: ahora borra definitivamente.
 - Número de agenda automático (mayor + 1); no se permite repetir número al editar.
@@ -180,3 +187,11 @@ Todo se guarda en un solo archivo SQLite:
 - **Cerrar y descargar PDF** en la pantalla de actividades: cierra, descarga el PDF, avisa de la próxima agenda y al aceptar abre el formulario ya relleno (para cambiar texto, imagen, etc.).
 - Barra superior común; menú del admin: Actividades · Historial · Usuarios. Quitados "Administrar" y "Datos de la agenda".
 - Validaciones: salida después de la entrada; fecha fin no anterior al inicio; no crear agendas en semanas pasadas.
+- Código publicado en GitHub: https://github.com/plucky64git/esumerAgenda
+
+## Historial de cambios (2026-11-24)
+- Cierre de sesión por inactividad: aviso a los 28 min y cierre a los 30 min.
+- Encabezados de la tabla iguales a la agenda en papel (Entrada y Salida se mantienen).
+- Campo ESPACIO - LUGAR con texto libre (con sugerencias); los nombres de la lista se corrigen solos para el control de cruces.
+- Barra superior fija al desplazarse; "By Poncho 2026" ya no se monta sobre el nombre.
+- Casilla "Durante la jornada" para actividades sin hora fija (no bloquean espacios, van de primeras, también en el PDF).

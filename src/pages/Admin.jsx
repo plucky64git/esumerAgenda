@@ -262,8 +262,6 @@ function Admin() {
 
     return (
         <div className="admin-page">
-            <div className="by-poncho">By Poncho 2026</div>
-
             {/* Ventana después de cerrar la agenda */}
             {ventanaCerrada && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '16px' }}>

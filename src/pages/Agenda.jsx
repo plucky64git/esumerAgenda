@@ -21,10 +21,29 @@ function horaAMin(h) {
     return hora * 60 + min;
 }
 
+// Actividad sin hora fija: se guarda este texto en horaEntrada (y horaSalida vacía).
+// No bloquea espacios: horaAMin devuelve -1 y el control de cruces la ignora.
+const JORNADA = 'DURANTE LA JORNADA';
+const esJornada = h => (h || '').trim().toUpperCase() === JORNADA;
+
 // true si ambas horas están puestas y la salida no es posterior a la entrada
 function horasInvalidas(act) {
     if (!act.horaEntrada || !act.horaSalida) return false;
     return horaAMin(act.horaSalida) <= horaAMin(act.horaEntrada);
+}
+
+// Quita espacios sobrantes, mayúsculas y tildes para comparar nombres
+function normalizarTexto(s) {
+    return (s || '').trim().replace(/\s+/g, ' ').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+// Si el texto escrito coincide con un espacio de la lista, devuelve su nombre exacto;
+// si no, devuelve el texto tal cual (sin espacios sobrantes).
+function espacioOficial(texto, espacios) {
+    const limpio = (texto || '').trim().replace(/\s+/g, ' ');
+    const n = normalizarTexto(limpio);
+    const nombres = [...espacios.map(e => e.nombre), ...ESPACIOS_CONFLICTO];
+    return nombres.find(nombre => normalizarTexto(nombre) === n) || limpio;
 }
 
 function detectarConflictos(acts) {
@@ -145,6 +164,7 @@ function Agenda() {
         if (!el || !el.closest || !el.closest('.activities-table')) return false;
         const tag = el.tagName;
         if (tag === 'SELECT') return true;
+        if (tag === 'INPUT' && el.type === 'checkbox') return false; // la casilla se guarda al instante
         if ((tag === 'INPUT' || tag === 'TEXTAREA') && !el.readOnly) return true;
         return false;
     };
@@ -276,6 +296,17 @@ function Agenda() {
         });
     };
 
+    // Casilla "Durante la jornada": reemplaza las horas por el aviso (o las limpia al desmarcar)
+    const cambiarJornada = (fecha, index, marcar) => {
+        const cambios = marcar ? { horaEntrada: JORNADA, horaSalida: '' } : { horaEntrada: '', horaSalida: '' };
+        setAgenda(prev => {
+            const acts = [...(prev.diasData[fecha] || [])];
+            acts[index] = { ...acts[index], ...cambios };
+            return { ...prev, diasData: { ...prev.diasData, [fecha]: acts } };
+        });
+        guardarFila(fecha, index, cambios);
+    };
+
     const actualizarCampo = (fecha, index, campo, valor) => {
         setAgenda(prev => {
             const acts = [...(prev.diasData[fecha] || [])];
@@ -289,7 +320,8 @@ function Agenda() {
         const acts = [...(agenda.diasData[fecha] || [])];
         if (acts[index]) acts[index] = { ...acts[index], ...cambios };
         const act = acts[index];
-        if (!act || (!act.proposito && !act.horaEntrada)) { guardandoRef.current = false; return; }
+        // Una fila nueva se guarda cuando tiene propósito u hora; una ya guardada siempre se actualiza
+        if (!act || (!act.proposito && !act.horaEntrada && !act.id)) { guardandoRef.current = false; return; }
 
         // Hora de salida debe ser posterior a la de entrada
         if (horasInvalidas(act)) { guardandoRef.current = false; return; }
@@ -359,8 +391,6 @@ function Agenda() {
 
     return (
         <div>
-            <div className="by-poncho">By Poncho 2026</div>
-
             <BarraSuperior
                 usuario={usuario}
                 esAdmin={esAdmin}
@@ -449,13 +479,14 @@ function Agenda() {
                             <table className="activities-table">
                                 <thead>
                                     <tr>
+                                        <th style={{ width: '6%' }} title="Durante la jornada (sin hora fija)">Jornada</th>
                                         <th style={{ width: '9%' }}>Entrada</th>
                                         <th style={{ width: '9%' }}>Salida</th>
-                                        <th style={{ width: '22%' }}>Propósito</th>
-                                        <th style={{ width: '17%' }}>Espacio</th>
-                                        <th style={{ width: '17%' }}>Líder</th>
-                                        <th style={{ width: '14%' }}>Observaciones</th>
-                                        <th style={{ width: '9%' }}>Creador</th>
+                                        <th style={{ width: '20%' }}>PROPÓSITO PEDAGÓGICO - ADMINISTRATIVO</th>
+                                        <th style={{ width: '17%' }}>ESPACIO - LUGAR</th>
+                                        <th style={{ width: '17%' }}>LIDER DEL ENCUENTRO</th>
+                                        <th style={{ width: '12%' }}>OBSERVACIONES</th>
+                                        <th style={{ width: '8%' }}>Creador</th>
                                         <th style={{ width: '3%' }}></th>
                                     </tr>
                                 </thead>
@@ -470,6 +501,22 @@ function Agenda() {
                                         };
                                         return (
                                         <tr key={act.id || `new-${idx}`}>
+                                            <td className="td-jornada">
+                                                {act.esMio && !soloLectura && (
+                                                    <input
+                                                        type="checkbox"
+                                                        className="chk-jornada"
+                                                        title="Durante la jornada (sin hora fija)"
+                                                        checked={esJornada(act.horaEntrada)}
+                                                        onChange={e => cambiarJornada(fecha, idx, e.target.checked)}
+                                                    />
+                                                )}
+                                            </td>
+                                            {esJornada(act.horaEntrada) ? (
+                                            <td colSpan={2}>
+                                                <div className="celda-jornada">DURANTE LA JORNADA</div>
+                                            </td>
+                                            ) : (<>
                                             <td style={{ position: 'relative' }}>
                                                 {malHora && (
                                                     <div className="tooltip-conflicto">La salida debe ser después de la entrada</div>
@@ -497,6 +544,7 @@ function Agenda() {
                                                     <input value={act.horaSalida ? formatHora(act.horaSalida) : ''} readOnly style={{ background: '#e9ecef' }} />
                                                 )}
                                             </td>
+                                            </>)}
                                             <td>
                                                 <textarea
                                                     value={act.proposito || ''}
@@ -508,17 +556,26 @@ function Agenda() {
                                             </td>
                                             <td style={{ position: 'relative' }}>
                                                 {act.esMio && !soloLectura ? (
-                                                    <select
+                                                    <input
+                                                        type="text"
+                                                        list="lista-espacios"
                                                         value={act.espacio || ''}
                                                         onChange={e => actualizarCampo(fecha, idx, 'espacio', e.target.value)}
-                                                        onBlur={() => guardarFila(fecha, idx)}
+                                                        onBlur={() => {
+                                                            // Si lo escrito es un espacio de la lista (sin importar mayúsculas,
+                                                            // tildes o espacios), se guarda con el nombre exacto, para que el
+                                                            // control de cruces lo reconozca.
+                                                            const oficial = espacioOficial(act.espacio, espacios);
+                                                            if (oficial !== act.espacio) {
+                                                                actualizarCampo(fecha, idx, 'espacio', oficial);
+                                                                guardarFila(fecha, idx, { espacio: oficial });
+                                                            } else {
+                                                                guardarFila(fecha, idx);
+                                                            }
+                                                        }}
+                                                        placeholder="Escriba o elija"
                                                         style={tieneConflicto ? { borderColor: '#dc3545', background: '#fff5f5' } : {}}
-                                                    >
-                                                        <option value="">-- Espacio --</option>
-                                                        {espacios.map(e => (
-                                                            <option key={e.id} value={e.nombre}>{e.nombre}</option>
-                                                        ))}
-                                                    </select>
+                                                    />
                                                 ) : (
                                                     <input value={act.espacio || ''} readOnly style={tieneConflicto ? { borderColor: '#dc3545', background: '#fff5f5' } : {}} />
                                                 )}
@@ -575,6 +632,13 @@ function Agenda() {
                         </div>
                         );
                     })}
+
+                    {/* Sugerencias para el campo Espacio (se puede escribir cualquier lugar) */}
+                    <datalist id="lista-espacios">
+                        {espacios.map(e => (
+                            <option key={e.id} value={e.nombre} />
+                        ))}
+                    </datalist>
 
                     {/* Sugerencias para el campo Líder (se puede escribir cualquier nombre) */}
                     <datalist id="lista-lideres">

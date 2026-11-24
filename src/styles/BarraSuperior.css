@@ -1,4 +1,9 @@
 .barra-superior {
+    /* Fija arriba aunque se baje en la página */
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     background: #0d2240;
     color: #fff;
     padding: 10px 20px;
@@ -16,6 +21,18 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
+}
+
+.barra-identidad {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.barra-firma {
+    font-size: 11px;
+    color: #e67e22;
+    font-weight: 500;
 }
 
 .barra-nombre {
@@ -124,6 +141,53 @@
 
 .barra-btn-salir:hover {
     background: #c82333;
+}
+
+/* Aviso de inactividad */
+.aviso-inactividad-fondo {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 16px;
+}
+
+.aviso-inactividad {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 10px;
+    padding: 24px 28px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.aviso-inactividad h3 {
+    margin: 0 0 10px;
+    color: #0d2240;
+}
+
+.aviso-inactividad p {
+    margin: 0 0 18px;
+    font-size: 15px;
+}
+
+.aviso-inactividad-btn {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 5px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.aviso-inactividad-btn:hover {
+    background: #218838;
 }
 
 @media (max-width: 700px) {
